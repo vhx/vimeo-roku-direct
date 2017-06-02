@@ -8,29 +8,57 @@ GIT
 GEM
   remote: https://rubygems.org/
   specs:
+    coderay (1.1.1)
+    concurrent-ruby (1.0.5)
+    connection_pool (2.2.1)
     dotenv (2.2.1)
+    faraday (0.9.2)
+      multipart-post (>= 1.2, < 3)
+    faraday_middleware (0.9.2)
+      faraday (>= 0.7.4, < 0.10)
     httparty (0.14.0)
       multi_xml (>= 0.5.2)
+    method_source (0.8.2)
     multi_xml (0.6.0)
+    multipart-post (2.0.0)
     mustermann (1.0.0)
+    pry (0.10.4)
+      coderay (~> 1.1.0)
+      method_source (~> 0.8.1)
+      slop (~> 3.4)
+    pry-remote (0.1.8)
+      pry (~> 0.9)
+      slop (~> 3.0)
     rack (2.0.3)
     rack-protection (2.0.0)
       rack
     redis (3.3.3)
+    sidekiq (5.0.0)
+      concurrent-ruby (~> 1.0)
+      connection_pool (~> 2.2, >= 2.2.0)
+      rack-protection (>= 1.5.0)
+      redis (~> 3.3, >= 3.3.3)
     sinatra (2.0.0)
       mustermann (~> 1.0)
       rack (~> 2.0)
       rack-protection (= 2.0.0)
       tilt (~> 2.0)
+    slop (3.6.0)
     tilt (2.0.7)
+    vhx-ruby (0.0.9)
+      faraday (~> 0.9.1)
+      faraday_middleware (~> 0.9.1)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
-  dotenv
-  redis
-  sinatra
+  dotenv (= 2.2.1)
+  pry-remote
+  redis (= 3.3.3)
+  sidekiq (= 5.0.0)
+  sinatra (= 2.0.0)
+  vhx-ruby (= 0.0.9)
   vimeo_me2!
 
 BUNDLED WITH

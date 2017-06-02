@@ -9,30 +9,21 @@ require 'json'
 require 'benchmark'
 
 class App < Sinatra::Base
-
   get '/' do
-    content_type :json
-    feed = VimeoFeed.new
-    output = feed.data
-
-    # if data is AWOL, run inline to the request (and cache)
-    if output.nil? || output.empty?
-      puts "Empty data feed, updating now..."
-      time = Benchmark.realtime {
-        output = feed.run_and_save
-      }
-      puts "Took #{time}s"
-    end
-    output
+    'nope.'
   end
 
-  get '/update' do
-    VimeoFeed.new.run_and_save
-  end
+  post '/' do
+    payload = JSON.parse(request.body.read, symbolize_names: true)
+    error 400, 'missing params' if payload[:provider_token].nil? ||
+                                   payload[:provider_token] == '' ||
+                                   payload[:vhx_key].nil? ||
+                                   payload[:vhx_key] == ''
 
-  get '/example.json' do
-    content_type :json
-    File.read('feeds/example.json')
+    VimeoFeed.new(
+      payload[:provider_token]
+    ).run(
+      payload[:vhx_key]
+    )
   end
-
 end
