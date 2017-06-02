@@ -13,17 +13,30 @@ class VideoExportWorker
   def perform(platform_token, vhx_token, vimeo_video_id)
     vimeo_video = VimeoMe2::Video.new(platform_token, vimeo_video_id).video
 
-    vhx = Vhx.setup({
-      api_key: vhx_token
-    })
+    vhx = Vhx.setup(
+      vhx_client_options(vhx_token)
+    )
 
-    # HAX TODO: VHX test env???
-    # Vhx::Video.create(
-    #  vimeo_to_vhx_arguments(vimeo_video)
-    # )
+    Vhx::Video.create(
+      vimeo_to_vhx_arguments(vimeo_video)
+    )
   end
 
   private
+
+  def argument_is_nil_or_blank(obj)
+    obj.nil? || obj == ''
+  end
+
+  def vhx_client_options(vhx_token)
+    return @base_options if @base_options
+    raise 'Not provided VHX token' if argument_is_nil_or_blank(vhx_token)
+    @base_options = { oauth_token: { token: vhx_token} }
+    @base_options[:api_base] = ENV['VHX_API_LOCATION'] unless argument_is_nil_or_blank(
+      ENV['VHX_API_LOCATION']
+    )
+    return @base_options
+  end
 
   def vimeo_to_vhx_arguments(vimeo_video)
     {
@@ -49,7 +62,7 @@ class VideoExportWorker
     source_file = source_files.sort_by { |link| link['quality'] }.last
     interim_location = source_file['link_secure'] 
     interim_location ||= source_file['link']
-    raise 'No valid link in Vimeo' if interim_location.nil? || interim_location == ''
+    raise 'No valid link in Vimeo' if argument_is_nil_or_blank(interim_location)
     @source_location = HTTParty.head(interim_location, follow_redirects: false)['location']
     @source_location ||= interim_location
   end
