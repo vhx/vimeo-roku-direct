@@ -3,10 +3,6 @@ require 'vimeo_me2'
 require 'pry-remote'
 require 'vhx'
 
-Sidekiq.configure_server do |config|
-  config.redis = { url: ENV['REDIS_URL'] || "redis://localhost:6379" }
-end
-
 class VideoExportWorker
   include Sidekiq::Worker
 
@@ -28,10 +24,20 @@ class VideoExportWorker
     obj.nil? || obj == ''
   end
 
+  def use_vhx_key
+    ENV['USE_VHX_KEY'] == 'true'
+  end
+
   def vhx_client_options(vhx_token)
     return @base_options if @base_options
-    raise 'Not provided VHX token' if argument_is_nil_or_blank(vhx_token)
-    @base_options = { oauth_token: { token: vhx_token} }
+    raise 'Not provided VHX credentials' if argument_is_nil_or_blank(vhx_token)
+
+    if use_vhx_key == true
+      @base_options = { api_key: vhx_token }
+    else
+      @base_options = { oauth_token: { token: vhx_token} }
+    end
+
     @base_options[:api_base] = ENV['VHX_API_LOCATION'] unless argument_is_nil_or_blank(
       ENV['VHX_API_LOCATION']
     )

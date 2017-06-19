@@ -23,7 +23,7 @@ class VimeoFeed
         next if video_rep['uri'].nil? || video_rep['uri'] == ''
         video_uris.push(video_rep['uri'])
         # HAX TODO: perform_async
-        VideoExportWorker.new.perform(
+        VideoExportWorker.perform_async(
           @vimeo_token,
           vhx_token,
           video_rep['uri']
