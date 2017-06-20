@@ -28,7 +28,6 @@ class App < Sinatra::Base
       error 400, 'missing params' if argument_is_nil_or_blank(site_id) ||
                                      argument_is_nil_or_blank(token)
 
-      token = '72ba5ed97bce41ba5d04b721c451d62f'
       site_token = locate_site_key(site_id)
 
       VimeoCollectionWorker.perform_async(
