@@ -10,6 +10,7 @@ require 'benchmark'
 require 'omniauth'
 require 'omniauth-vimeo'
 require 'sidekiq'
+require 'sidekiq/throttled'
 require_relative 'lib/vimeo_collection_worker'
 
 class App < Sinatra::Base
@@ -46,7 +47,6 @@ class App < Sinatra::Base
                                    payload[:provider_token] == '' ||
                                    payload[:vhx_key].nil? ||
                                    payload[:vhx_key] == ''
-
 
     VimeoCollectionWorker.perform_async(
       payload[:provider_token],

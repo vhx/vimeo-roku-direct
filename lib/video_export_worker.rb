@@ -1,24 +1,62 @@
 require 'sidekiq'
-require 'vimeo_me2'
+require "sidekiq/throttled"
 require 'pry-remote'
 require 'vhx'
 
 class VideoExportWorker
   include Sidekiq::Worker
+  include Sidekiq::Throttled::Worker
 
-  def perform(platform_token, vhx_token, vimeo_video_id)
-    vimeo_video = VimeoMe2::Video.new(platform_token, vimeo_video_id).video
+
+  sidekiq_throttle({
+    :concurrency => { :limit => 10 },
+    :threshold => { :limit => 1, :period => 3600 } # one hour
+  })
+
+  sidekiq_options unique: :until_timeout, unique_expiration: 120 * 60 # 2 hours
+
+  def perform(platform_token, vhx_token, vimeo_video_uri)
 
     vhx = Vhx.setup(
       vhx_client_options(vhx_token)
     )
 
     Vhx::Video.create(
-      vimeo_to_vhx_arguments(vimeo_video)
+      vimeo_to_vhx_arguments(
+        fetch_video(platform_token, vimeo_video_uri)
+      )
     )
   end
 
   private
+
+  def vimeo_api_location
+    ENV['VIMEO_API_LOCATION'] || 'https://api.vimeo.com'
+  end
+
+  def auth_header(platform_token)
+    { 'Authorization' => "Bearer #{platform_token}" }
+  end
+
+  def fetch_video(platform_token, vimeo_video_uri)
+    uri = "#{vimeo_api_location}#{vimeo_video_uri}?#{filter_fields_query_param}"
+
+    puts "Fetching #{uri} ..."
+    res = HTTParty.get(uri, { headers: auth_header(platform_token) })
+    return process(res)
+  end
+
+  def process(res)
+    raise 'Vimeo Rate Limit Hit' if res.code == 429
+    raise "Vimeo Returned: #{res.code}" if res.code != 200
+
+   JSON.parse(res.body)
+  end
+
+  def filter_fields_query_param
+    filters = %w(name description pictures files download).join(',')
+    "fields=#{filters}"
+  end
 
   def argument_is_nil_or_blank(obj)
     obj.nil? || obj == ''

@@ -1,9 +1,9 @@
-require 'vimeo_me2'
 require 'redis'
 require 'time'
 require 'pp'
 require 'pry-remote'
 require 'sidekiq'
+require 'httparty'
 require_relative 'lib/video_export_worker'
 
 class VimeoFeed
@@ -12,7 +12,7 @@ class VimeoFeed
   end
 
   def run(vhx_token = '')
-    next_page = '/me/videos'
+    next_page = '/me/videos?fields=uri'
     video_uris = []
 
     loop do
@@ -22,7 +22,6 @@ class VimeoFeed
       raw['data'].each do |video_rep|
         next if video_rep['uri'].nil? || video_rep['uri'] == ''
         video_uris.push(video_rep['uri'])
-        # HAX TODO: perform_async
         VideoExportWorker.perform_async(
           @vimeo_token,
           vhx_token,
@@ -39,10 +38,27 @@ class VimeoFeed
 
   protected
 
+  def vimeo_api_location
+    ENV['VIMEO_API_LOCATION'] || 'https://api.vimeo.com'
+  end
+
+  def auth_header
+    raise 'No VIMEO_ACCESS_TOKEN defined' if @vimeo_token.nil? || @vimeo_token.empty?
+    { 'Authorization' => "Bearer #{@vimeo_token}" }
+  end
+
   def fetch_results(endpoint)
-    token = @vimeo_token
-    raise 'No VIMEO_ACCESS_TOKEN defined' if token.nil? || token.empty?
-    puts "Fetching #{endpoint} ..."
-    VimeoMe2::Video.new(token, endpoint).video
+    uri = "#{vimeo_api_location}#{endpoint}"
+    puts "Fetching #{uri} ..."
+    res = HTTParty.get(uri, headers: auth_header)
+
+    process(res)
+  end
+
+  def process(res)
+    raise 'Vimeo Rate Limit Hit' if res.code == 429
+    raise "Vimeo Returned: #{res.code}" if res.code != 200
+
+    JSON.parse(res.body)
   end
 end
