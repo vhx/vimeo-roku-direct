@@ -71,8 +71,8 @@ class VhxContentUploadWorker
   def source_location(vimeo_video)
     return @source_location if @source_location 
     source_files = []
-    source_files += Array(vimeo_video['files']&.select { |link| link['quality'] == 'source' || link['height'] == 1920 })
-    source_files += Array(vimeo_video['download']&.select { |link| link['quality'] == 'source' || link['height'] == 1920 })
+    source_files += Array(vimeo_video['files']&.select { |link| link['quality'] == 'source' || link['width'].to_i >= 1920 })
+    source_files += Array(vimeo_video['download']&.select { |link| link['quality'] == 'source' || link['width'].to_i >= 1920 })
     source_files = source_files.flatten.compact
     raise 'No quality files' if source_files.empty?
     source_file = source_files.sort_by { |link| link['quality'] }.last
