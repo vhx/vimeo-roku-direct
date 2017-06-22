@@ -50,8 +50,6 @@ GEM
       connection_pool (~> 2.2, >= 2.2.0)
       rack-protection (>= 1.5.0)
       redis (~> 3.3, >= 3.3.3)
-    sidekiq-throttled (0.7.2)
-      sidekiq
     sidekiq-unique-jobs (5.0.8)
       sidekiq (>= 4.0, <= 6.0)
       thor (~> 0)
@@ -79,7 +77,6 @@ DEPENDENCIES
   redis (= 3.3.3)
   redis-namespace (= 1.5.3)
   sidekiq (= 5.0.0)
-  sidekiq-throttled (= 0.7.2)
   sidekiq-unique-jobs (~> 5.0.8)
   sinatra (= 2.0.0)
   vhx-ruby (= 0.0.9)

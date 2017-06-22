@@ -10,7 +10,6 @@ require 'benchmark'
 require 'omniauth'
 require 'omniauth-vimeo'
 require 'sidekiq'
-require 'sidekiq/throttled'
 require_relative 'lib/vimeo_collection_worker'
 
 class App < Sinatra::Base

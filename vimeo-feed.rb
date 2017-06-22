@@ -4,7 +4,8 @@ require 'pp'
 require 'pry-remote'
 require 'sidekiq'
 require 'httparty'
-require_relative 'lib/video_export_worker'
+require_relative 'lib/vhx_content_upload_worker'
+
 
 class VimeoFeed
   def initialize(vimeo_token = nil)
@@ -12,7 +13,7 @@ class VimeoFeed
   end
 
   def run(vhx_token = '')
-    next_page = '/me/videos?fields=uri'
+    next_page = "/me/videos#{fields_param}"
     video_uris = []
 
     loop do
@@ -22,12 +23,11 @@ class VimeoFeed
       raw['data'].each do |video_rep|
         next if video_rep['uri'].nil? || video_rep['uri'] == ''
         video_uris.push(video_rep['uri'])
-        VideoExportWorker.perform_async(
-          @vimeo_token,
+        VhxContentUploadWorker.perform_async(
           vhx_token,
-          video_rep['uri']
+          video_rep
         )
-        puts "Enqueued #{video_rep['uri']}"
+        puts "Enqueued #{video_rep}"
       end
       next_page = raw['paging']['next']
       break if next_page.nil? || next_page.empty?
@@ -37,6 +37,11 @@ class VimeoFeed
   end
 
   protected
+
+  def fields_param
+    filters = %w(uri name description pictures files download).join(',')
+    "?fields=#{filters}"
+  end
 
   def vimeo_api_location
     ENV['VIMEO_API_LOCATION'] || 'https://api.vimeo.com'

@@ -1,6 +1,5 @@
 require 'sidekiq'
 require 'sidekiq/web'
-require 'sidekiq/throttled'
 require 'redis'
 require './app'
 
@@ -15,7 +14,5 @@ end
 Sidekiq::Web.use(Rack::Auth::Basic) do |username, password|
   [username, password] == ['christopherf', ENV['SIDEKIQ_PASSWORD']]
 end
-
-Sidekiq::Throttled.setup!
 
 run Rack::URLMap.new('/' => App, '/sidekiq' => Sidekiq::Web)
