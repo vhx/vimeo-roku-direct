@@ -13,7 +13,9 @@ class VideoExportWorker
     :threshold => { :limit => 1, :period => 3600 } # one hour
   })
 
-  sidekiq_options unique: :until_timeout, unique_expiration: 120 * 60 # 2 hours
+  sidekiq_retry_in do |count|
+    60 * 60
+  end
 
   def perform(platform_token, vhx_token, vimeo_video_uri)
 
