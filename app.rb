@@ -30,12 +30,18 @@ class App < Sinatra::Base
 
       site_token = locate_site_key(site_id)
 
-      VimeoCollectionWorker.perform_async(
-        token,
-        site_token
-      )
+      if !request_submitted_recently(site_id)
+        VimeoCollectionWorker.perform_async(
+          token,
+          site_token,
+        )
 
-      erb :success
+        set_expiry(site_id)
+
+        erb :success
+      else
+        erb :already_queued
+      end
     end
   end
 
@@ -63,5 +69,34 @@ class App < Sinatra::Base
 
   def argument_is_nil_or_blank(obj)
     obj.nil? || obj == ''
+  end
+
+  def redis_con
+    @_redis_con ||= Redis.new
+  end
+
+  def redis_expiry_key(site_id)
+    "#{site_id}_expiry"
+  end
+
+  def request_submitted_recently(site_id)
+    expiry_seconds = redis_con.get(
+      redis_expiry_key(site_id)
+    )
+
+    expiry_seconds.to_i > Time.now.to_i
+  end
+
+  def expiry_ttl_seconds
+    @_expiry_time ||= 86400
+  end
+
+  def set_expiry(site_id)
+    present_in_seconds = Time.now.to_i
+    redis_con.setex(
+      redis_expiry_key(site_id),
+      expiry_ttl_seconds,
+      expiry_ttl_seconds + present_in_seconds
+    )
   end
 end
