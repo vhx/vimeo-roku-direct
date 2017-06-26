@@ -11,6 +11,10 @@ class VhxContentUploadWorker
 
   def perform(vhx_token, vimeo_video_hash)
 
+    if vhx_token == 'AxU7Ai8tufxLKzNBxCGjFxaYUYVRovfy'
+      vhx_token = ENV['DEMODEMO']
+    end
+
     vhx = Vhx.setup(
       vhx_client_options(vhx_token)
     )
